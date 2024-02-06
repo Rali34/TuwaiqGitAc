@@ -1,21 +1,27 @@
 name: Lint Markdown Files
 
-on:
-  pull_request:
-    branches:
-      - main
+on: 
+  pull_request: 
+  branches: [ master ] 
 
-jobs:
-  lint:
+jobs: 
+  proselint:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+      - name: Set up Python environment
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install proselint write-good
+      - name: Run Proselint and WriteGood checks
+        run: |
+          proselint ./**/*.md $*find . -name '*.md' -not -path ".github/") || echo "Proselint errors found!"
+           write-good ./**/*.md $(find . -name '*.md' -not -path ".github/*") ||echo "Write Good suggestions found!" 
 
-      - name: Install write-good
-        run: npm install -g write-good
-
-      - name: Lint Markdown Files
-        run: write-good '**/*.md'
-
+      - name: Fail workflow if errors or suggestions found
+        if: ${{ always() }} 
+        run: |
+           if [[ ${PROSELINT_EXIT_CODE} -ne 0 || ${WRITE_GOOD_EXIT_ CODE} -ne 0 ]]; then
+             exit 1
+           fi
